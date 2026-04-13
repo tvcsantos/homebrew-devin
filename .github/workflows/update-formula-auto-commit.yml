@@ -1,0 +1,95 @@
+name: "Option A: Auto-update formula (commit to main)"
+
+on:
+  # Uncomment the schedule below to enable automatic daily updates.
+  # NOTE: only one auto-update workflow should have a schedule at a time.
+  # If you enable this, disable the schedule in update-formula-pr.yml.
+  # schedule:
+  #   - cron: "0 8 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-formula:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check for new Devin CLI version
+        id: check
+        run: |
+          set -euo pipefail
+
+          MANIFEST_URL="https://static.devin.ai/cli/current/manifest.json"
+          MANIFEST=$(curl -sSf "$MANIFEST_URL")
+
+          LATEST_VERSION=$(echo "$MANIFEST" | jq -r '.version')
+          if [ -z "$LATEST_VERSION" ] || [ "$LATEST_VERSION" = "null" ]; then
+            echo "Failed to parse version from manifest"
+            exit 1
+          fi
+
+          CURRENT_VERSION=$(grep -oP 'version "\K[^"]+' Formula/devin.rb)
+          echo "current=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
+          echo "latest=$LATEST_VERSION" >> "$GITHUB_OUTPUT"
+
+          if [ "$CURRENT_VERSION" = "$LATEST_VERSION" ]; then
+            echo "Formula is up to date ($CURRENT_VERSION)"
+            echo "updated=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "New version available: $CURRENT_VERSION -> $LATEST_VERSION"
+          echo "updated=true" >> "$GITHUB_OUTPUT"
+
+          # Extract macOS arm64 sha256
+          ARM64_SHA256=$(echo "$MANIFEST" | jq -r '.platforms["aarch64-apple-darwin"].sha256')
+          # Extract macOS x86_64 sha256
+          X86_64_SHA256=$(echo "$MANIFEST" | jq -r '.platforms["x86_64-apple-darwin"].sha256')
+
+          if [ -z "$ARM64_SHA256" ] || [ "$ARM64_SHA256" = "null" ] || \
+             [ -z "$X86_64_SHA256" ] || [ "$X86_64_SHA256" = "null" ]; then
+            echo "Failed to extract checksums from manifest"
+            exit 1
+          fi
+
+          echo "arm64_sha256=$ARM64_SHA256" >> "$GITHUB_OUTPUT"
+          echo "x86_64_sha256=$X86_64_SHA256" >> "$GITHUB_OUTPUT"
+
+      - name: Update formula
+        if: steps.check.outputs.updated == 'true'
+        env:
+          LATEST_VERSION: ${{ steps.check.outputs.latest }}
+          CURRENT_VERSION: ${{ steps.check.outputs.current }}
+          ARM64_SHA256: ${{ steps.check.outputs.arm64_sha256 }}
+          X86_64_SHA256: ${{ steps.check.outputs.x86_64_sha256 }}
+        run: |
+          set -euo pipefail
+
+          FORMULA="Formula/devin.rb"
+
+          # Update version
+          sed -i "s/version \"${CURRENT_VERSION}\"/version \"${LATEST_VERSION}\"/" "$FORMULA"
+
+          # Update arm64 sha256 (first sha256 in the file)
+          # Use awk to replace the first and second sha256 occurrences
+          awk -v arm_sha="$ARM64_SHA256" -v intel_sha="$X86_64_SHA256" '
+            /sha256/ && !first_done { sub(/sha256 "[^"]*"/, "sha256 \"" arm_sha "\""); first_done=1; print; next }
+            /sha256/ && first_done && !second_done { sub(/sha256 "[^"]*"/, "sha256 \"" intel_sha "\""); second_done=1; print; next }
+            { print }
+          ' "$FORMULA" > "${FORMULA}.tmp" && mv "${FORMULA}.tmp" "$FORMULA"
+
+          echo "Updated formula to version $LATEST_VERSION"
+          cat "$FORMULA"
+
+      - name: Commit and push
+        if: steps.check.outputs.updated == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/devin.rb
+          git commit -m "Update devin to ${{ steps.check.outputs.latest }}"
+          git push
