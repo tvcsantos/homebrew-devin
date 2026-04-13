@@ -5,6 +5,7 @@ class Devin < Formula
   desc "Command-line coding agent powered by Devin's intelligence"
   homepage "https://cli.devin.ai"
   version "2026.4.9-0"
+  license "MIT"
 
   on_macos do
     on_arm do

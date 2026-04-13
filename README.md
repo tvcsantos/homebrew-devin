@@ -49,4 +49,6 @@ By default, **Option B** runs on a daily schedule. Option A is manual-only (`wor
 
 ## License
 
-This tap is an unofficial community project and is not affiliated with Cognition AI.
+This tap is licensed under the [MIT License](LICENSE).
+
+This is an unofficial community project and is not affiliated with Cognition AI.
