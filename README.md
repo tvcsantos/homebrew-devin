@@ -52,3 +52,7 @@ By default, **Option B** runs on a daily schedule. Option A is manual-only (`wor
 This tap is licensed under the [MIT License](LICENSE).
 
 This is an unofficial community project and is not affiliated with Cognition AI.
+
+---
+
+> **Fun fact:** This entire repository — the formula, the CI workflows, this README — was built by [Devin](https://cli.devin.ai) itself. Yes, Devin wrote its own Homebrew installer. If that's not self-service, I don't know what is. 🤖🍺
