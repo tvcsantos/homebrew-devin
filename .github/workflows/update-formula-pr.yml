@@ -1,9 +1,12 @@
-name: "Option B: Auto-update formula (open PR)"
+name: "Auto-update formula (open PR)"
 
 on:
-  schedule:
-    # Run daily at 08:00 UTC
-    - cron: "0 8 * * *"
+  # Uncomment the schedule below to enable PR daily updates.
+  # NOTE: only one auto-update workflow should have a schedule at a time.
+  # If you enable this, disable the schedule in update-formula-auto-commit.yml.
+  # schedule:
+  #  # Run daily at 08:00 UTC
+  #  - cron: "0 8 * * *"
   workflow_dispatch:
 
 permissions:
@@ -91,7 +94,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: update-devin/${{ steps.check.outputs.latest }}
           delete-branch: true
-          title: "Update devin to ${{ steps.check.outputs.latest }}"
+          title: "chore: update devin to ${{ steps.check.outputs.latest }}"
           body: |
             Automated update of the Devin CLI formula.
 
