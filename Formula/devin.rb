@@ -4,17 +4,17 @@
 class Devin < Formula
   desc "Command-line coding agent powered by Devin's intelligence"
   homepage "https://cli.devin.ai"
-  version "3000.13.4"
+  version "3000.14.30821"
   license "MIT"
 
   on_macos do
     on_arm do
       url "https://static.devin.ai/cli/#{version}/devin-#{version}-aarch64-apple-darwin.tar.gz"
-      sha256 "24b52c2bb312f8ab3d71545a173a69446901b27da5a44300bd03464ab066525b"
+      sha256 "46ef1a75d8bd851665179e136b7e39ad597d3d7913b95d67fd2b88e9c8af0061"
     end
     on_intel do
       url "https://static.devin.ai/cli/#{version}/devin-#{version}-x86_64-apple-darwin.tar.gz"
-      sha256 "0e10437b40064dca09295d3d1f174ff4934aee9c98c54b833e55fa9841cf3598"
+      sha256 "e0ffc5fb0bc367270f20f15686bba74a2851959e782a37c016c68b91229ec0db"
     end
   end
 
